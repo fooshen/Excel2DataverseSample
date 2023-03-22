@@ -1,0 +1,792 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "ExcelHelper",
+    "description": "Connector to extract data from Excel sheets and create xMultiple JSON for Dataverse",
+    "version": "1.0"
+  },
+  "host": "graph.microsoft.com",
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [],
+  "produces": [],
+  "paths": {
+    "/v1.0/sites/{sitehost}:{relativeUrl}": {
+      "get": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "id"
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Get Site Id",
+        "description": "Retrieve the SharePoint site Id based on relative path.",
+        "operationId": "GetSiteId",
+        "parameters": [
+          {
+            "name": "sitehost",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "relativeUrl",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "$select",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "default": "id",
+            "x-ms-visibility": "internal"
+          }
+        ]
+      }
+    },
+    "/v1.0/sites/{siteId}/drives": {
+      "get": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "@odata.context": {
+                  "type": "string",
+                  "description": "@odata.context"
+                },
+                "value": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "id"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "name"
+                      },
+                      "webUrl": {
+                        "type": "string",
+                        "description": "webUrl"
+                      }
+                    }
+                  },
+                  "description": "value"
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Get Document Libraries",
+        "description": "Get a SharePoint drive id for the library",
+        "operationId": "GetDocumentLibraries",
+        "parameters": [
+          {
+            "name": "siteId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "$select",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "default": "id,name,webUrl",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "$filter",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "default": "driveType eq 'documentLibrary'",
+            "x-ms-visibility": "internal"
+          }
+        ]
+      }
+    },
+    "/v1.0/sites/{siteId}/drives/{driveId}/root:/{fileName}": {
+      "get": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "@odata.context": {
+                  "type": "string",
+                  "description": "@odata.context"
+                },
+                "@odata.etag": {
+                  "type": "string",
+                  "description": "@odata.etag"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "id"
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Get File Item Id",
+        "description": "Get the internal drive item id for the file.",
+        "operationId": "GetFileItemId",
+        "parameters": [
+          {
+            "name": "siteId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "driveId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "$select",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "default": "id",
+            "x-ms-visibility": "internal"
+          }
+        ]
+      }
+    },
+    "/v1.0/sites/{siteId}/drives/{driveId}/items/{itemId}/workbook/createSession": {
+      "post": {
+        "responses": {
+          "202": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "type": "string",
+                  "description": "location"
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Create Excel Session",
+        "description": "Create a new Workbook session",
+        "operationId": "CreateExcelSession",
+        "parameters": [
+          {
+            "name": "siteId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "driveId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "application/json",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "Prefer",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "respond-async",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "persistChanges": {
+                  "type": "boolean",
+                  "description": "persistChanges"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/v1.0/sites/{siteId}/drives/{driveId}/items/{itemId}/workbook/worksheets/": {
+      "get": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "@odata.context": {
+                  "type": "string",
+                  "description": "@odata.context"
+                },
+                "value": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "@odata.id": {
+                        "type": "string",
+                        "description": "@odata.id"
+                      },
+                      "id": {
+                        "type": "string",
+                        "description": "id"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "name"
+                      },
+                      "position": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "position"
+                      },
+                      "visibility": {
+                        "type": "string",
+                        "description": "visibility"
+                      }
+                    }
+                  },
+                  "description": "value"
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Get Worksheets",
+        "description": "List available worksheets",
+        "operationId": "GetWorksheets",
+        "parameters": [
+          {
+            "name": "siteId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "driveId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "application/json",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "workbook-session-id",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "/v1.0/sites/{siteId}/drives/{driveId}/items/{itemId}/workbook/worksheets/{sheetName}/range/{usedRangeValuesOnly}": {
+      "get": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "@odata.context": {
+                  "type": "string",
+                  "description": "@odata.context"
+                },
+                "@odata.type": {
+                  "type": "string",
+                  "description": "@odata.type"
+                },
+                "@odata.id": {
+                  "type": "string",
+                  "description": "@odata.id"
+                },
+                "address": {
+                  "type": "string",
+                  "description": "address"
+                },
+                "columnCount": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "columnCount"
+                },
+                "cellCount": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "cellCount"
+                },
+                "columnIndex": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "columnIndex"
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Get Used Range",
+        "description": "Get used range address",
+        "operationId": "GetUsedRange",
+        "parameters": [
+          {
+            "name": "siteId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "driveId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "sheetName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "usedRangeValuesOnly",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "default": "usedRange(valuesOnly=true)",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "$select",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "default": "address,columnCount,cellCount,columnIndex",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "workbook-session-id",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "/getAsyncSessionResult": {
+      "get": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "@odata.context": {
+                  "type": "string",
+                  "description": "@odata.context"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "id"
+                },
+                "status": {
+                  "type": "string",
+                  "description": "status"
+                },
+                "resourceLocation": {
+                  "type": "string",
+                  "description": "resourceLocation"
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Get Async Create Session Result",
+        "operationId": "GetAsyncCreateSessionResult",
+        "description": "Polls the async session result",
+        "parameters": [
+          {
+            "name": "x-location",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "/getAsyncSessionValue": {
+      "get": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "@odata.context": {
+                  "type": "string",
+                  "description": "@odata.context"
+                },
+                "persistChanges": {
+                  "type": "boolean",
+                  "description": "persistChanges"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "id"
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Get Async Create Session Value",
+        "operationId": "GetAsyncCreateSessionValue",
+        "description": "Get the session ID using the provided async location",
+        "parameters": [
+          {
+            "name": "x-location",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "/GetRows": {
+      "get": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "@odata.context": {
+                  "type": "string",
+                  "description": "@odata.context"
+                },
+                "@odata.type": {
+                  "type": "string",
+                  "description": "@odata.type"
+                },
+                "@odata.id": {
+                  "type": "string",
+                  "description": "@odata.id"
+                },
+                "text": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "description": "text"
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Get Rows",
+        "description": "Get row values",
+        "operationId": "GetRows",
+        "parameters": [
+          {
+            "name": "workbook-session-id",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "siteId",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "driveId",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "itemId",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sheetName",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "address",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "/ConvertDataForXMultiple": {
+      "post": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Convert Data For XMultiple",
+        "description": "Convert input data from Excel ranges into XMultiple JSON",
+        "operationId": "ConvertDataForXMultiple",
+        "parameters": [
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "application/json",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "x-Columns",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "x-TrackerColumn",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "x-TrackerValue",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "x-TableName",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "x-GuidColumn",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "If specified, a unique GUID is added based the primary column value."
+          },
+          {
+            "name": "x-PrimaryColumn",
+            "in": "header",
+            "required": false,
+            "type": "string",
+            "description": "If specified, a unique GUID is added based the primary column value."
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/GetAddressRangeBatch": {
+      "get": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "Batch": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Batch"
+                },
+                "TotalRows": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "TotalRows"
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Get Address Range Batch",
+        "description": "Return a given address range in array using a provided batch size",
+        "operationId": "GetAddressRangeBatch",
+        "parameters": [
+          {
+            "name": "x-Address",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "x-BatchSize",
+            "in": "header",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "x-StartRow",
+            "in": "header",
+            "required": true,
+            "type": "integer"
+          }
+        ]
+      }
+    },
+    "/aaa": {}
+  },
+  "definitions": {},
+  "parameters": {},
+  "responses": {},
+  "securityDefinitions": {
+    "oauth2-auth": {
+      "type": "oauth2",
+      "flow": "accessCode",
+      "authorizationUrl": "https://login.microsoftonline.com/common/oauth2/authorize",
+      "tokenUrl": "https://login.windows.net/common/oauth2/authorize",
+      "scopes": {}
+    }
+  },
+  "security": [
+    {
+      "oauth2-auth": []
+    }
+  ],
+  "tags": []
+}

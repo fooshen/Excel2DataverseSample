@@ -1,0 +1,10 @@
+{
+  "connectorId": "shared_excelhelper-5ffea3d5cead634233-5fa79c28db02f95272",
+  "environment": "febc4715-fdaf-e68d-8e75-2b6a22ffa594",
+  "apiProperties": "apiProperties.json",
+  "apiDefinition": "apiDefinition.swagger.json",
+  "icon": "icon.png",
+  "powerAppsUrl": "https://api.powerapps.com",
+  "powerAppsApiVersion": "2016-11-01",
+  "script": "script.csx"
+}

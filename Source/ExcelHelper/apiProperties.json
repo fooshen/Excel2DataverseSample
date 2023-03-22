@@ -1,0 +1,90 @@
+{
+  "properties": {
+    "connectionParameters": {
+      "token": {
+        "type": "oauthSetting",
+        "oAuthSettings": {
+          "identityProvider": "aad",
+          "clientId": "1a0d45cb-ea55-45b5-9b42-84656cb6a902",
+          "scopes": [],
+          "redirectMode": "Global",
+          "redirectUrl": "https://global.consent.azure-apim.net/redirect",
+          "properties": {
+            "IsFirstParty": "True",
+            "AzureActiveDirectoryResourceId": "https://graph.microsoft.com",
+            "IsOnbehalfofLoginSupported": true
+          },
+          "customParameters": {
+            "loginUri": {
+              "value": "https://login.microsoftonline.com"
+            },
+            "tenantId": {
+              "value": "common"
+            },
+            "resourceUri": {
+              "value": "https://graph.microsoft.com"
+            },
+            "enableOnbehalfOfLogin": {
+              "value": "true"
+            }
+          }
+        }
+      },
+      "token:TenantId": {
+        "type": "string",
+        "metadata": {
+          "sourceType": "AzureActiveDirectoryTenant"
+        },
+        "uiDefinition": {
+          "constraints": {
+            "required": "false",
+            "hidden": "true"
+          }
+        }
+      }
+    },
+    "iconBrandColor": "#007ee5",
+    "scriptOperations": [
+      "ConvertDataForXMultiple",
+      "CreateExcelSession",
+      "GetAddressRangeBatch"
+    ],
+    "capabilities": [],
+    "policyTemplateInstances": [
+      {
+        "templateId": "routerequesttoendpoint",
+        "title": "Get Async Create Session Result Policy",
+        "parameters": {
+          "x-ms-apimTemplateParameter.newPath": "@headers('x-location')",
+          "x-ms-apimTemplateParameter.httpMethod": "@Request.OriginalHTTPMethod",
+          "x-ms-apimTemplate-operationName": [
+            "GetAsyncCreateSessionResult"
+          ]
+        }
+      },
+      {
+        "templateId": "routerequesttoendpoint",
+        "title": "Get Async Create Session Value Policy",
+        "parameters": {
+          "x-ms-apimTemplateParameter.newPath": "@headers('x-location')",
+          "x-ms-apimTemplateParameter.httpMethod": "@Request.OriginalHTTPMethod",
+          "x-ms-apimTemplate-operationName": [
+            "GetAsyncCreateSessionValue"
+          ]
+        }
+      },
+      {
+        "templateId": "routerequesttoendpoint",
+        "title": "Get Rows Address Policy",
+        "parameters": {
+          "x-ms-apimTemplateParameter.newPath": "https://graph.microsoft.com/v1.0/sites/@headers('siteId')/drives/@headers('driveId')/items/@headers('itemId')/workbook/worksheets/@headers('sheetName')/range(address='@headers('address')')?$select=text",
+          "x-ms-apimTemplateParameter.httpMethod": "@Request.OriginalHTTPMethod",
+          "x-ms-apimTemplate-operationName": [
+            "GetRows"
+          ]
+        }
+      }
+    ],
+    "publisher": "System Administrator"
+  }
+}
