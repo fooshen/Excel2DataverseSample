@@ -111,8 +111,12 @@ public class Script : ScriptBase
         string[] rangeParts = address.Split(':');
         string startCell = rangeParts[0];
         string endCell = rangeParts[1];
-        int startRow = int.Parse(startCell.Substring(1)) + (firstRow - 1);
-        int endRow = int.Parse(endCell.Substring(1));
+
+        Match startCellNum = Regex.Match(startCell, @"\d+");
+        int startRow = int.Parse(startCellNum.Value) + (firstRow - 1);
+
+        Match endRowNum = Regex.Match(endCell, @"\d+");
+        int endRow = int.Parse(endRowNum.Value);
         int numRows = endRow - startRow + 1;
         int numBatches = (numRows + batchSize - 1) / batchSize;
     
@@ -120,7 +124,7 @@ public class Script : ScriptBase
         {
             int startBatchRow = startRow + i * batchSize;
             int endBatchRow = Math.Min(startBatchRow + batchSize - 1, endRow);
-            string batchRange = $"{startCell.Substring(0, 1)}{startBatchRow}:{endCell.Substring(0, 1)}{endBatchRow}";
+            string batchRange = $"{startCell.Replace(startCellNum.Value, "")}{startBatchRow}:{endCell.Replace(endRowNum.Value, "")}{endBatchRow}";
             batches.Add(batchRange);
         }
         
