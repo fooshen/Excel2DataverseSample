@@ -15,6 +15,14 @@ public class Script : ScriptBase
         {
             return await this.HandleGetAddressRangeBatch().ConfigureAwait(false);
         }
+        if(this.Context.OperationId == "ValidateDataRegex")
+        {
+            return await this.HandleValidateDataRegex().ConfigureAwait(false);
+        }
+        if(this.Context.OperationId == "FindDuplicates")
+        {
+            return await this.HandleDuplicates().ConfigureAwait(false);
+        }
 
         // Handle an invalid operation ID
         HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.BadRequest);
@@ -136,5 +144,167 @@ public class Script : ScriptBase
 
         response.Content = CreateJsonContent(JsonConvert.SerializeObject(result).ToString());
         return response;
+    }
+
+    private async Task<HttpResponseMessage> HandleValidateDataRegex()
+    {
+        var regexInput = this.Context.Request.Headers.TryGetValues("Regex", out var regexValue) ? regexValue.FirstOrDefault() : "";
+        var colIdxInput = this.Context.Request.Headers.TryGetValues("ColumnIndex", out var colIndexValue) ? colIndexValue.FirstOrDefault(): "-1";
+        int colIdx = int.Parse(colIdxInput);
+
+        var firstCellAddress = this.Context.Request.Headers.TryGetValues("FirstCellAddress", out var firstCellAddressValue) ? firstCellAddressValue.FirstOrDefault(): "";
+                
+        string dataInput = await this.Context.Request.Content.ReadAsStringAsync().ConfigureAwait(false);
+        
+        JArray dataArray = JArray.Parse(dataInput);
+        Regex regex = new Regex(regexInput);
+        List<CellData> results = new List<CellData>();
+
+        for(int i = 0; i < dataArray.Count; i++)
+        {
+            if(colIdx == -1)
+            {
+                for(int j = 0; j < dataArray[i].Count(); j++)
+                {
+                    string dataItem = dataArray[i][j].ToString();
+                    if(!regex.IsMatch(dataItem))
+                    {
+                        results.Add(new CellData(firstCellAddress, j, i, dataItem));
+                    }
+                }                
+            }
+            else
+            {
+                string dataItem = dataArray[i][colIdx].ToString();
+                if(!regex.IsMatch(dataItem))
+                {
+                    results.Add(new CellData(firstCellAddress, colIdx, i, dataItem));
+                }
+            }
+        } 
+        HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
+        response.Content = CreateJsonContent(JsonConvert.SerializeObject(results).ToString());
+        return response;
+    }
+
+    private async Task<HttpResponseMessage> HandleDuplicates()
+    {
+        var colIdxInput = this.Context.Request.Headers.TryGetValues("ColumnIndex", out var colIndexValue) ? colIndexValue.FirstOrDefault(): "-1";
+        var caseSensitiveInput = this.Context.Request.Headers.TryGetValues("CaseSensitive", out var caseSensitiveValue)? caseSensitiveValue.FirstOrDefault(): "true";
+
+        int colIdx = int.Parse(colIdxInput);
+        bool caseSensitive = bool.Parse(caseSensitiveInput);
+
+        var firstCellAddress = this.Context.Request.Headers.TryGetValues("FirstCellAddress", out var firstCellAddressValue) ? firstCellAddressValue.FirstOrDefault(): "";
+        string dataInput = await this.Context.Request.Content.ReadAsStringAsync().ConfigureAwait(false);
+        JArray dataArray = JArray.Parse(dataInput);
+        var dataset = new Dictionary<string, CellData>();
+        var duplicates = new Dictionary<string, List<CellData>>();
+
+        for(int i = 0; i < dataArray.Count; i++)
+        {
+            if(colIdx > -1)
+            {
+                string dataItem = dataArray[i][colIdx].ToString();
+                if(!caseSensitive) dataItem = dataItem.ToLower();
+                if(dataset.Keys.Contains(dataItem))
+                {
+                    if(!duplicates.Keys.Contains(dataItem))
+                    {
+                        CellData org = dataset[dataItem];
+                        duplicates.Add(dataItem, new List<CellData>());
+                        duplicates[dataItem].Add(new CellData(firstCellAddress, org.Col, org.Row, dataItem));
+                    }
+                    duplicates[dataItem].Add(new CellData(firstCellAddress, colIdx, i, dataItem));
+                }
+                else
+                {
+                    dataset.Add(dataItem, new CellData(firstCellAddress, colIdx, i, dataItem));
+                }                
+            }
+        } 
+
+        List<ResultSet> results = new List<ResultSet>();
+        foreach(var dup in duplicates)
+        {
+            ResultSet rs = new ResultSet(dup.Key);
+            foreach(CellData cell in dup.Value)
+            {
+                rs.Cells.Add(cell.Cell);
+            }
+            results.Add(rs);
+        }
+
+        HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
+        response.Content = CreateJsonContent(JsonConvert.SerializeObject(results).ToString());
+        return response;
+    }
+}
+
+internal class ResultSet
+{
+    public ResultSet(string value)
+    {
+        this.Value = value;
+        this.Cells = new List<string>();
+    }
+    public string Value { get; set; }
+    public List<string> Cells { get; set; }
+}
+
+internal class CellData
+{
+    private string start;
+    private int col; 
+    private int row;
+    private string data;
+    public CellData(string startAddress, int col, int row, string data)
+    {
+        this.start = startAddress;
+        this.col = col;
+        this.row = row;
+        this.Data = data;
+    }
+    
+    [JsonIgnore]
+    public int Col { get { return this.col; }}
+
+    [JsonIgnore]
+    public int Row { get { return this.row; }}
+
+    public string Cell { 
+        get {
+            Match colMatch = Regex.Match(this.start, @"[0-9]+$");
+            int startRow = int.Parse(colMatch.Value);
+            string startCol = this.start.Replace(startRow.ToString(), "");
+
+            return $"{ this.CalculateEndColumn(startCol, this.col) }{this.row + startRow}";  
+        }
+    }
+    public string Data { get; set; }
+
+    private string CalculateEndColumn(string startingColumn, int totalColumns)
+    {            
+        return this.GetColumnName(this.GetColumnValue(startingColumn) + totalColumns);
+    }
+
+    private int GetColumnValue(string column)
+    {
+        int value = 0;
+        foreach (char c in column) { value = value * 26 + (c - 'A' + 1); }
+        return value;
+    }
+
+    private string GetColumnName(int value)
+    {
+        string columnName = "";
+        while (value > 0)
+        {
+            int remainder = (value - 1) % 26;
+            char columnChar = (char)('A' + remainder);
+            columnName = columnChar + columnName;
+            value = (value - 1) / 26;
+        }
+        return columnName;
     }
 }
