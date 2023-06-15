@@ -19,11 +19,21 @@
           "default": {
             "description": "default",
             "schema": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "description": "id"
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "Value": {
+                    "type": "string",
+                    "description": "Value"
+                  },
+                  "Cells": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Cells"
+                  }
                 }
               }
             },
@@ -769,7 +779,177 @@
         ]
       }
     },
-    "/aaa": {}
+    "/ValidateRegex": {
+      "post": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "Row": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Row"
+                  },
+                  "Col": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Col"
+                  },
+                  "Data": {
+                    "type": "string",
+                    "description": "Data"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Validate Data Regex",
+        "description": "Validate Data using Regex",
+        "operationId": "ValidateDataRegex",
+        "parameters": [
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "application/json",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "Regex",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ColumnIndex",
+            "in": "header",
+            "required": false,
+            "type": "number"
+          },
+          {
+            "name": "FirstCellAddress",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/FindDuplicates": {
+      "post": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "Value": {
+                    "type": "string",
+                    "description": "Value"
+                  },
+                  "Cells": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Cells"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Check for duplicates",
+        "operationId": "FindDuplicates",
+        "parameters": [
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "application/json",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "application/json",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "FirstCellAddress",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "A1"
+          },
+          {
+            "name": "ColumnIndex",
+            "in": "header",
+            "required": true,
+            "type": "integer",
+            "default": 0
+          },
+          {
+            "name": "CaseSensitive",
+            "in": "header",
+            "required": true,
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
   },
   "definitions": {},
   "parameters": {},
