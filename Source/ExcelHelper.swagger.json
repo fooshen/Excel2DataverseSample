@@ -19,21 +19,15 @@
           "default": {
             "description": "default",
             "schema": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "Value": {
-                    "type": "string",
-                    "description": "Value"
-                  },
-                  "Cells": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Cells"
-                  }
+              "type": "object",
+              "properties": {
+                "@odata.context": {
+                  "type": "string",
+                  "description": "@odata.context"
+                },
+                "id": {
+                  "type": "string",
+                  "description": "id"
                 }
               }
             },
@@ -684,13 +678,13 @@
           {
             "name": "x-TrackerColumn",
             "in": "header",
-            "required": true,
+            "required": false,
             "type": "string"
           },
           {
             "name": "x-TrackerValue",
             "in": "header",
-            "required": true,
+            "required": false,
             "type": "string"
           },
           {
@@ -712,6 +706,28 @@
             "required": false,
             "type": "string",
             "description": "If specified, a unique GUID is added based the primary column value."
+          },
+          {
+            "name": "x-MergeColumns",
+            "type": "string",
+            "in": "header",
+            "required": false,
+            "description": "If specified, provide a comma delimited list of column names to be combined in a single column"
+          },
+          {
+            "name": "x-MergeColumnName",
+            "in": "header",
+            "type": "string",
+            "required": false,
+            "description": "Target column for the merged column value."
+          },
+          {
+            "name": "x-MergeColumnDelimiter",
+            "in": "header",
+            "type": "string",
+            "required": false,
+            "default": "||",
+            "description": "Delimiter for merged column values."
           },
           {
             "name": "body",
