@@ -60,7 +60,10 @@ public class Script : ScriptBase
         var trackerValue = this.Context.Request.Headers.TryGetValues("x-TrackerValue", out var trValue) ? trValue.FirstOrDefault(): "";
         var guidColumn = this.Context.Request.Headers.TryGetValues("x-GuidColumn", out var guidCol) ? guidCol.FirstOrDefault(): "";
         var primaryColumn = this.Context.Request.Headers.TryGetValues("x-PrimaryColumn", out var prCol) ? prCol.FirstOrDefault(): "";
-        
+        var mergeColumns = this.Context.Request.Headers.TryGetValues("x-MergeColumns", out var mergeCol) ? mergeCol.FirstOrDefault(): "";
+        var mergeColumnName = this.Context.Request.Headers.TryGetValues("x-MergeColumnName", out var mergeColName) ? mergeColName.FirstOrDefault(): "";
+        var mergeColumnDelim = this.Context.Request.Headers.TryGetValues("x-MergeColumnDelimiter", out var mergeColDelim) ? mergeColDelim.FirstOrDefault(): "";
+
         var dataInput = await this.Context.Request.Content.ReadAsStringAsync().ConfigureAwait(false);
         
         var columns = JsonConvert.DeserializeObject<List<string>>(columnInput);
@@ -78,8 +81,9 @@ public class Script : ScriptBase
             var primaryNameValue = string.Empty;
 
             var item = new Dictionary<string, string>(columns.Count + additionalCol);
-            item["@odata.type"] = $"Microsoft.Dynamics.CRM.{ tableName }";           
-            item[trackerColumn] = trackerValue;
+            item["@odata.type"] = $"Microsoft.Dynamics.CRM.{ tableName }";   
+
+            if(trackerColumn.Length > 0) item[trackerColumn] = trackerValue;
             
             var columnEnumerator = columns.GetEnumerator();
             var rowEnumerator = row.GetEnumerator();
@@ -97,6 +101,23 @@ public class Script : ScriptBase
 
                 }
             }
+            if(mergeColumns.Length > 0)
+            {
+                string[] mColumns = mergeColumns.Split(',');
+                StringBuilder mergedValue = new StringBuilder();
+                foreach(string column in mColumns)
+                {
+                    string colValue = (string)item[column];
+                    mergedValue.Append(colValue).Append(mergeColumnDelim);
+                }
+                if(mergedValue.Length > 0)
+                {
+                    mergedValue.Length -= mergeColumnDelim.Length;
+                    item[mergeColumnName] = mergedValue.ToString();
+                }
+            }
+
+
             output.Add(item);
         }
         
