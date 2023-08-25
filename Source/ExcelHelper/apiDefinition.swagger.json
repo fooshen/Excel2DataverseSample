@@ -21,6 +21,10 @@
             "schema": {
               "type": "object",
               "properties": {
+                "@odata.context": {
+                  "type": "string",
+                  "description": "@odata.context"
+                },
                 "id": {
                   "type": "string",
                   "description": "id"
@@ -674,13 +678,13 @@
           {
             "name": "x-TrackerColumn",
             "in": "header",
-            "required": true,
+            "required": false,
             "type": "string"
           },
           {
             "name": "x-TrackerValue",
             "in": "header",
-            "required": true,
+            "required": false,
             "type": "string"
           },
           {
@@ -702,6 +706,49 @@
             "required": false,
             "type": "string",
             "description": "If specified, a unique GUID is added based the primary column value."
+          },
+          {
+            "name": "x-AdditionalColumnNames",
+            "type": "string",
+            "in": "header",
+            "required": false,
+            "description": "Comma separated column names to add to payload, mapped to values in x-AdditionalColumnValues."
+          },
+          {
+            "name": "x-AdditionalColumnValues",
+            "type": "string",
+            "in": "header",
+            "required": false,
+            "description": "Character separated column values to add to payload, mapped to column names in x-AdditionalColumnNames.  Use x-ColumnDelimiter value for the delimiter character (Default is '|')"
+          },
+          {
+            "name": "x-MergeColumns",
+            "type": "string",
+            "in": "header",
+            "required": false,
+            "description": "If specified, provide a comma delimited list of column names to be combined in a single column"
+          },
+          {
+            "name": "x-MergeColumnName",
+            "in": "header",
+            "type": "string",
+            "required": false,
+            "description": "Target column for the merged column value."
+          },
+          {
+            "name": "x-ColumnDelimiter",
+            "in": "header",
+            "type": "string",
+            "required": false,
+            "default": "|",
+            "description": "Single character delimiter for merged column values as well as additional column values."
+          },
+          {
+            "name": "x-TTL",
+            "in": "header",
+            "type": "integer",
+            "required": false,
+            "description": "Time to Live, if specified this will map to TTLInSeconds column for elastic tables."
           },
           {
             "name": "body",
@@ -769,7 +816,215 @@
         ]
       }
     },
-    "/aaa": {}
+    "/ValidateRegex": {
+      "post": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "Row": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Row"
+                  },
+                  "Col": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "Col"
+                  },
+                  "Data": {
+                    "type": "string",
+                    "description": "Data"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Validate Data Regex",
+        "description": "Validate Data using Regex",
+        "operationId": "ValidateDataRegex",
+        "parameters": [
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "application/json",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "Regex",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ColumnIndex",
+            "in": "header",
+            "required": false,
+            "type": "number"
+          },
+          {
+            "name": "FirstCellAddress",
+            "in": "header",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/FindDuplicates": {
+      "post": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "Value": {
+                    "type": "string",
+                    "description": "Value"
+                  },
+                  "Cells": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Cells"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "description": "Content-Type",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "summary": "Check for duplicates",
+        "operationId": "FindDuplicates",
+        "parameters": [
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "application/json",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "application/json",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "FirstCellAddress",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "A1"
+          },
+          {
+            "name": "ColumnIndex",
+            "in": "header",
+            "required": true,
+            "type": "integer",
+            "default": 0
+          },
+          {
+            "name": "CaseSensitive",
+            "in": "header",
+            "required": true,
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/ChunkArray": {
+      "post": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {}
+          }
+        },
+        "summary": "Chunk Array",
+        "description": "Chunk a given excel data array into batches",
+        "operationId": "ChunkArray",
+        "parameters": [
+          {
+            "name": "Content-type",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "application/json",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "ChunkSize",
+            "in": "header",
+            "required": true,
+            "type": "integer",
+            "default": 200
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    }
   },
   "definitions": {},
   "parameters": {},
