@@ -708,6 +708,20 @@
             "description": "If specified, a unique GUID is added based the primary column value."
           },
           {
+            "name": "x-AdditionalColumnNames",
+            "type": "string",
+            "in": "header",
+            "required": false,
+            "description": "Comma separated column names to add to payload, mapped to values in x-AdditionalColumnValues."
+          },
+          {
+            "name": "x-AdditionalColumnValues",
+            "type": "string",
+            "in": "header",
+            "required": false,
+            "description": "Character separated column values to add to payload, mapped to column names in x-AdditionalColumnNames.  Use x-ColumnDelimiter value for the delimiter character (Default is '|')"
+          },
+          {
             "name": "x-MergeColumns",
             "type": "string",
             "in": "header",
@@ -722,12 +736,19 @@
             "description": "Target column for the merged column value."
           },
           {
-            "name": "x-MergeColumnDelimiter",
+            "name": "x-ColumnDelimiter",
             "in": "header",
             "type": "string",
             "required": false,
-            "default": "||",
-            "description": "Delimiter for merged column values."
+            "default": "|",
+            "description": "Single character delimiter for merged column values as well as additional column values."
+          },
+          {
+            "name": "x-TTL",
+            "in": "header",
+            "type": "integer",
+            "required": false,
+            "description": "Time to Live, if specified this will map to TTLInSeconds column for elastic tables."
           },
           {
             "name": "body",
@@ -961,6 +982,44 @@
                   "type": "string"
                 }
               }
+            }
+          }
+        ]
+      }
+    },
+    "/ChunkArray": {
+      "post": {
+        "responses": {
+          "default": {
+            "description": "default",
+            "schema": {}
+          }
+        },
+        "summary": "Chunk Array",
+        "description": "Chunk a given excel data array into batches",
+        "operationId": "ChunkArray",
+        "parameters": [
+          {
+            "name": "Content-type",
+            "in": "header",
+            "required": true,
+            "type": "string",
+            "default": "application/json",
+            "x-ms-visibility": "internal"
+          },
+          {
+            "name": "ChunkSize",
+            "in": "header",
+            "required": true,
+            "type": "integer",
+            "default": 200
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ]
