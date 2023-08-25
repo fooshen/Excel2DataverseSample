@@ -23,6 +23,10 @@ public class Script : ScriptBase
         {
             return await this.HandleDuplicates().ConfigureAwait(false);
         }
+        if(this.Context.OperationId == "ChunkArray")
+        {
+            return await this.HandleChunkArray().ConfigureAwait(false);
+        }
 
         // Handle an invalid operation ID
         HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.BadRequest);
@@ -38,9 +42,6 @@ public class Script : ScriptBase
         // Do the transformation if the response was successful, otherwise return error responses as-is
         if (response.IsSuccessStatusCode)
         {
-            //var responseString = await response.Content.ReadAsStringAsync().ConfigureAwait(continueOnCapturedContext: false);
-        
-            // Example case: response string is some JSON object
             string location = response.Headers.TryGetValues("location", out var values) ? values.FirstOrDefault() : "";
         
             if(location != "https://graph.microsoft.com/") {
@@ -62,14 +63,16 @@ public class Script : ScriptBase
         var primaryColumn = this.Context.Request.Headers.TryGetValues("x-PrimaryColumn", out var prCol) ? prCol.FirstOrDefault(): "";
         var mergeColumns = this.Context.Request.Headers.TryGetValues("x-MergeColumns", out var mergeCol) ? mergeCol.FirstOrDefault(): "";
         var mergeColumnName = this.Context.Request.Headers.TryGetValues("x-MergeColumnName", out var mergeColName) ? mergeColName.FirstOrDefault(): "";
-        var mergeColumnDelim = this.Context.Request.Headers.TryGetValues("x-MergeColumnDelimiter", out var mergeColDelim) ? mergeColDelim.FirstOrDefault(): "";
+        var columnDelimiter = this.Context.Request.Headers.TryGetValues("x-ColumnDelimiter", out var colDelim) ? colDelim.FirstOrDefault(): "|";
+        var addColumnNames = this.Context.Request.Headers.TryGetValues("x-AdditionalColumnNames", out var addColName) ? addColName.FirstOrDefault(): "";
+        var addColumnValues = this.Context.Request.Headers.TryGetValues("x-AdditionalColumnValues", out var addColValue) ? addColValue.FirstOrDefault(): "";
+
+        var ttlInput = this.Context.Request.Headers.TryGetValues("x-TTL", out var ttlValue) ? ttlValue.FirstOrDefault(): "-1";
+        int ttl = int.Parse(ttlInput);
 
         var dataInput = await this.Context.Request.Content.ReadAsStringAsync().ConfigureAwait(false);
-        
-        var columns = JsonConvert.DeserializeObject<List<string>>(columnInput);
-      
-        var batchData = JsonConvert.DeserializeObject<List<List<string>>>(dataInput);
-        
+        var columns = new List<string>(columnInput.Split(','));        
+        var batchData = JsonConvert.DeserializeObject<List<List<string>>>(dataInput);        
         var output = new List<Dictionary<string, string>>(batchData.Count);
 
         foreach (var row in batchData)
@@ -78,12 +81,23 @@ public class Script : ScriptBase
             bool useGuid = !string.IsNullOrEmpty(guidColumn) && !string.IsNullOrEmpty(primaryColumn);
             //if GuidColumn and PrimaryColumn is provided
             if(useGuid) additionalCol++;
+
+            //if ttl is provided
+            if(ttl > 0) additionalCol++;
             var primaryNameValue = string.Empty;
+
+            //if additional columns is provided
+            string[] additionalCols = addColumnNames.Split(',');
+            string[] additionalVals = addColumnValues.Split(columnDelimiter.ToCharArray()[0]);
+            if(!string.IsNullOrEmpty(addColumnNames)) {
+                additionalCol += additionalCols.Length;
+            }
 
             var item = new Dictionary<string, string>(columns.Count + additionalCol);
             item["@odata.type"] = $"Microsoft.Dynamics.CRM.{ tableName }";   
 
             if(trackerColumn.Length > 0) item[trackerColumn] = trackerValue;
+            if(ttl > 0) item["ttlinseconds"] = ttl.ToString();
             
             var columnEnumerator = columns.GetEnumerator();
             var rowEnumerator = row.GetEnumerator();
@@ -98,7 +112,6 @@ public class Script : ScriptBase
                         hashCode = md5.ComputeHash(Encoding.UTF8.GetBytes(rowEnumerator.Current));
                     }
                     item[guidColumn] = (new Guid(hashCode)).ToString();
-
                 }
             }
             if(mergeColumns.Length > 0)
@@ -108,21 +121,24 @@ public class Script : ScriptBase
                 foreach(string column in mColumns)
                 {
                     string colValue = (string)item[column];
-                    mergedValue.Append(colValue).Append(mergeColumnDelim);
+                    mergedValue.Append(colValue).Append(columnDelimiter);
                 }
                 if(mergedValue.Length > 0)
                 {
-                    mergedValue.Length -= mergeColumnDelim.Length;
+                    mergedValue.Length -= columnDelimiter.Length;
                     item[mergeColumnName] = mergedValue.ToString();
                 }
             }
-
-
+            if(additionalCols.Length > 0)
+            {
+                for(int i = 0; i < additionalCols.Length; i++)
+                {
+                    item[additionalCols[i]] = additionalVals[i];
+                }
+            }
             output.Add(item);
-        }
-        
-        var result = JsonConvert.SerializeObject(output, Newtonsoft.Json.Formatting.None);
-            
+        }        
+        var result = JsonConvert.SerializeObject(output, Newtonsoft.Json.Formatting.None);            
         HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
         response.Content = CreateJsonContent(result.ToString());
         return response;
@@ -162,7 +178,6 @@ public class Script : ScriptBase
         };
 
         HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
-
         response.Content = CreateJsonContent(JsonConvert.SerializeObject(result).ToString());
         return response;
     }
@@ -175,8 +190,7 @@ public class Script : ScriptBase
 
         var firstCellAddress = this.Context.Request.Headers.TryGetValues("FirstCellAddress", out var firstCellAddressValue) ? firstCellAddressValue.FirstOrDefault(): "";
                 
-        string dataInput = await this.Context.Request.Content.ReadAsStringAsync().ConfigureAwait(false);
-        
+        string dataInput = await this.Context.Request.Content.ReadAsStringAsync().ConfigureAwait(false);       
         JArray dataArray = JArray.Parse(dataInput);
         Regex regex = new Regex(regexInput);
         List<CellData> results = new List<CellData>();
@@ -188,19 +202,13 @@ public class Script : ScriptBase
                 for(int j = 0; j < dataArray[i].Count(); j++)
                 {
                     string dataItem = dataArray[i][j].ToString();
-                    if(!regex.IsMatch(dataItem))
-                    {
-                        results.Add(new CellData(firstCellAddress, j, i, dataItem));
-                    }
+                    if(!regex.IsMatch(dataItem)) results.Add(new CellData(firstCellAddress, j, i, dataItem));
                 }                
             }
             else
             {
                 string dataItem = dataArray[i][colIdx].ToString();
-                if(!regex.IsMatch(dataItem))
-                {
-                    results.Add(new CellData(firstCellAddress, colIdx, i, dataItem));
-                }
+                if(!regex.IsMatch(dataItem)) results.Add(new CellData(firstCellAddress, colIdx, i, dataItem));
             }
         } 
         HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
@@ -258,6 +266,26 @@ public class Script : ScriptBase
 
         HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
         response.Content = CreateJsonContent(JsonConvert.SerializeObject(results).ToString());
+        return response;
+    }
+
+    private async Task<HttpResponseMessage> HandleChunkArray()
+    {
+        var chunkSizeInput = this.Context.Request.Headers.TryGetValues("ChunkSize", out var chunkSizeValue) ? chunkSizeValue.FirstOrDefault(): "200";
+        int chunkSize = int.Parse(chunkSizeInput);
+        
+        var dataInput = await this.Context.Request.Content.ReadAsStringAsync().ConfigureAwait(false);
+        JArray dataArray = JArray.Parse(dataInput);
+        List<List<string>> inputList = dataArray.ToObject<List<List<string>>>();
+        List<List<List<string>>> result = new List<List<List<string>>>();
+        for(int i = 0; i < inputList.Count; i += chunkSize)
+        {
+            List<List<string>> chunk = inputList.GetRange(i, Math.Min(chunkSize, inputList.Count - i));
+            result.Add(chunk);
+        }
+
+        HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK);
+        response.Content = CreateJsonContent(JArray.FromObject(result).ToString());
         return response;
     }
 }
